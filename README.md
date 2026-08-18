@@ -1,11 +1,14 @@
-# Finger Frame AI 🎬✨
-
-**Try it: https://sophiamyang.github.io/finger-frame-effect-ai/**
+# Finger Frame Studio 🎬✨
 
 Upload a video of the two-hand finger-frame gesture — get it back with an
 **AI-generated world inside the frame**. The whole video is restyled by a
 video-to-video model (motion, blinks, and all), then composited so the
-finger frame acts as a window into the animated version.
+finger frame acts as a window into the animated version. The restyle stage
+is pluggable — Gemini today, Higgsfield (via MCP) and more models to come.
+
+Based on [finger-frame-effect-ai](https://github.com/sophiamyang/finger-frame-effect-ai)
+by [Sophia Yang](https://github.com/sophiamyang)
+([original live demo](https://sophiamyang.github.io/finger-frame-effect-ai/)).
 
 ## The finger-frame family
 

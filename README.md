@@ -38,7 +38,11 @@ style ([full-quality mp4](examples/final.mp4)).*
    finger-frame quad is tracked with the same audited pipeline as the live
    app (anatomical corner ordering — crossing your fingers renders the
    bowtie — spread/area gates with hysteresis, teleport rejection,
-   velocity-adaptive smoothing, dropout hold, presence fade).
+   velocity-adaptive smoothing, dropout hold, presence fade). A **multi
+   windows** toggle tracks every adjacent-fingertip gap (thumb–index,
+   index–middle, middle–ring, ring–pinky) as its own window, so two spread
+   hands become a row of frames — closing two fingers closes just that
+   window.
 3. **Composite** — the AI video is revealed through the tracked quad with
    the dashed marching-ants outline and pulsing corner dots.
 4. **Export** — the result records to a downloadable video — MP4 where the

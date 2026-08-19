@@ -186,6 +186,12 @@
     }
     #panel.skipped { opacity: 0.4; pointer-events: none; }
 
+    /* ---- window assignment ---- */
+    .assign-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .assign-row:last-child { margin-bottom: 0; }
+    .assign-row .w-name { flex: none; width: 130px; font-size: 12.5px; color: var(--text-dim); }
+    .assign-row select { margin-bottom: 0; }
+
     /* ---- stage ---- */
     #stage {
       width: min(960px, 100%);
@@ -289,20 +295,26 @@
       <div class="film">🎬</div>
       <div class="badge">Main video</div>
       <div class="big" id="main-big">Drop the finger-frame gesture clip</div>
-      <div class="small">Its finger frame becomes the window. Drop two files
-        at once to also set the inside video.</div>
+      <div class="small">Its finger frame becomes the window. Extra files
+        dropped here become inside videos.</div>
     </label>
     <label class="drop" id="drop-inside">
       <span class="corner tl"></span><span class="corner tr"></span>
       <span class="corner bl"></span><span class="corner br"></span>
-      <input id="file-inside" type="file" accept="video/*" />
+      <input id="file-inside" type="file" accept="video/*" multiple />
       <div class="film">🖼️</div>
       <div class="badge alt">Inside the frame</div>
-      <div class="big" id="inside-big">Drop the inside video</div>
-      <div class="small">Plays inside the finger frame — skips Key &amp; style,
-        no API key needed.</div>
-      <button class="clear hidden" id="inside-clear" type="button" title="Remove inside video">✕</button>
+      <div class="big" id="inside-big">Drop inside video(s)</div>
+      <div class="small">Play inside the finger frames — skips Key &amp; style,
+        no API key needed. Drop several to fill multiple windows.</div>
+      <button class="clear hidden" id="inside-clear" type="button" title="Remove inside videos">✕</button>
     </label>
+  </div>
+
+  <div class="card hidden" id="assign">
+    <div class="step">Windows
+      <span class="opt">— which inside video shows in each finger gap</span></div>
+    <div id="assign-rows"></div>
   </div>
 
   <div class="card" id="panel">
@@ -341,7 +353,6 @@
   <div id="stage">
     <video id="orig" playsinline muted></video>
     <video id="sty" playsinline muted crossorigin="anonymous"></video>
-    <video id="inside" playsinline muted></video>
     <div class="canvas-wrap"><canvas id="canvas"></canvas></div>
     <div id="controls">
       <button id="btn-generate" class="primary">✨ Generate AI video</button>

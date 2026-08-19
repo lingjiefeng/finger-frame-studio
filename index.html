@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Finger Frame AI</title>
+  <title>Finger Frame Studio</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
@@ -128,39 +128,63 @@
       margin-bottom: 6px;
     }
 
-    /* ---- drop zone ---- */
-    #drop {
-      position: relative;
+    /* ---- drop zones ---- */
+    .drops {
       width: min(720px, 100%);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 560px) { .drops { grid-template-columns: 1fr; } }
+    .drop {
+      position: relative;
       border: 1.5px dashed rgba(255, 255, 255, 0.22);
       border-radius: 18px;
-      padding: 44px 24px;
+      padding: 34px 20px;
       text-align: center;
       cursor: pointer;
-      margin-bottom: 16px;
       transition: border-color 0.15s, background 0.15s, padding 0.25s;
     }
-    #drop:hover, #drop.over {
+    .drop:hover, .drop.over {
       border-color: rgba(255, 194, 75, 0.6);
       background: rgba(255, 194, 75, 0.045);
     }
-    #drop.compact { padding: 18px 24px; }
-    #drop.compact .film, #drop.compact .small { display: none; }
-    #drop input { display: none; }
-    #drop .corner {
+    .drop.compact { padding: 18px 20px; }
+    .drop.compact .film, .drop.compact .small { display: none; }
+    .drop input { display: none; }
+    .drop .corner {
       position: absolute; width: 18px; height: 18px;
       border: 2.5px solid transparent;
       border-image: var(--grad) 1;
       transition: all 0.2s;
     }
-    #drop .corner.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
-    #drop .corner.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
-    #drop .corner.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
-    #drop .corner.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
-    #drop:hover .corner { width: 24px; height: 24px; }
-    #drop .film { font-size: 26px; margin-bottom: 10px; }
-    #drop .big { font-size: 15px; font-weight: 650; margin-bottom: 6px; }
-    #drop .small { font-size: 12.5px; color: var(--text-faint); }
+    .drop .corner.tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+    .drop .corner.tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+    .drop .corner.bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+    .drop .corner.br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+    .drop:hover .corner { width: 24px; height: 24px; }
+    .drop .film { font-size: 26px; margin-bottom: 10px; }
+    .drop .big { font-size: 14.5px; font-weight: 650; margin-bottom: 6px; overflow-wrap: anywhere; }
+    .drop .small { font-size: 12px; color: var(--text-faint); line-height: 1.5; }
+    .drop .badge {
+      display: inline-block;
+      font-size: 10px; font-weight: 800;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: var(--grad);
+      color: #1a120b;
+      margin-bottom: 10px;
+    }
+    .drop .badge.alt { background: rgba(255, 255, 255, 0.08); color: var(--text-dim); }
+    .drop .clear {
+      position: absolute; top: 8px; right: 8px;
+      width: 24px; height: 24px; padding: 0;
+      border-radius: 50%;
+      font-size: 11px; line-height: 1;
+    }
+    #panel.skipped { opacity: 0.4; pointer-events: none; }
 
     /* ---- stage ---- */
     #stage {
@@ -249,24 +273,49 @@
 <body>
   <header>
     <div class="mark"><i></i><i></i><i></i><i></i>✨</div>
-    <h1>Finger Frame AI</h1>
+    <h1>Finger Frame Studio</h1>
     <div class="sub">
-      Upload a clip of the <b>finger-frame gesture</b> — get it back with an
-      AI-animated version of you living inside the frame, tracked to your
-      fingers.
+      Upload a clip of the <b>finger-frame gesture</b>, plus a second video to
+      play inside the frame — or a single clip with an AI restyle. Either way,
+      the window tracks your fingers.
     </div>
   </header>
 
+  <div class="drops">
+    <label class="drop" id="drop">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <input id="file" type="file" accept="video/*" multiple />
+      <div class="film">🎬</div>
+      <div class="badge">Main video</div>
+      <div class="big" id="main-big">Drop the finger-frame gesture clip</div>
+      <div class="small">Its finger frame becomes the window. Drop two files
+        at once to also set the inside video.</div>
+    </label>
+    <label class="drop" id="drop-inside">
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <input id="file-inside" type="file" accept="video/*" />
+      <div class="film">🖼️</div>
+      <div class="badge alt">Inside the frame</div>
+      <div class="big" id="inside-big">Drop the inside video</div>
+      <div class="small">Plays inside the finger frame — skips Key &amp; style,
+        no API key needed.</div>
+      <button class="clear hidden" id="inside-clear" type="button" title="Remove inside video">✕</button>
+    </label>
+  </div>
+
   <div class="card" id="panel">
-    <div class="step"><span class="n">1</span> Key &amp; style
-      <span class="opt">— key needed only for the AI restyle</span></div>
+    <div class="step">Key &amp; style
+      <span class="opt">— only used when you don't upload an inside video</span></div>
     <p>
       Restyling runs on <strong>Gemini Omni Flash</strong>
       (<a href="https://ai.google.dev/gemini-api/docs/omni" target="_blank" rel="noopener">video-to-video editing</a>)
       with your own key from
       <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>.
       It stays in your browser and is sent only to Google's API. No key? Try
-      everything with the placeholder style first.
+      everything with the placeholder style first — or upload an inside video
+      above and skip this step entirely.
     </p>
     <div class="row2">
       <div>
@@ -289,18 +338,10 @@
     </div>
   </div>
 
-  <label id="drop">
-    <span class="corner tl"></span><span class="corner tr"></span>
-    <span class="corner bl"></span><span class="corner br"></span>
-    <input id="file" type="file" accept="video/*" />
-    <div class="film">🎬</div>
-    <div class="big"><span style="opacity:.55">2 ·</span> Drop a video here, or click to choose</div>
-    <div class="small">A few seconds of 720p footage with the two-hand gesture works best (&lt;15MB).</div>
-  </label>
-
   <div id="stage">
     <video id="orig" playsinline muted></video>
     <video id="sty" playsinline muted crossorigin="anonymous"></video>
+    <video id="inside" playsinline muted></video>
     <div class="canvas-wrap"><canvas id="canvas"></canvas></div>
     <div id="controls">
       <button id="btn-generate" class="primary">✨ Generate AI video</button>

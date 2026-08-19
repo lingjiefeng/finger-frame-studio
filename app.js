@@ -191,6 +191,7 @@ async function loadVideo(file) {
   usePlaceholder = false;
   btnPlay.disabled = !haveInside;
   btnExport.disabled = !haveInside;
+  btnPlay.textContent = "▶ Preview";
   orig.src = URL.createObjectURL(file);
   await new Promise((res) => (orig.onloadedmetadata = res));
   canvas.width = orig.videoWidth;
@@ -680,10 +681,41 @@ async function playThrough() {
   requestAnimationFrame(loop);
 }
 
+async function togglePreview() {
+  if (!orig.paused && !orig.ended) {
+    orig.pause();
+    windowVideo()?.pause();
+    btnPlay.textContent = "▶ Resume";
+    status("Paused — click again (or the video) to resume.");
+  } else if (orig.currentTime > 0 && !orig.ended) {
+    windowVideo()?.play();
+    await orig.play();
+    requestAnimationFrame(loop);
+    btnPlay.textContent = "⏸ Pause";
+    status("Previewing…");
+  } else {
+    btnPlay.textContent = "⏸ Pause";
+    status("Previewing…");
+    await playThrough();
+  }
+}
+
 btnPlay.addEventListener("click", () => {
   if (exporting) return;
-  playThrough();
-  status("Previewing…");
+  togglePreview();
+});
+
+// Clicking the video itself pauses/resumes, like a normal player.
+canvas.addEventListener("click", () => {
+  if (exporting || btnPlay.disabled) return;
+  togglePreview();
+});
+
+orig.addEventListener("ended", () => {
+  if (!exporting) {
+    btnPlay.textContent = "▶ Preview";
+    status("Preview finished — play again or export.");
+  }
 });
 
 // ---- export (canvas capture -> webm download) ----
@@ -726,6 +758,7 @@ btnExport.addEventListener("click", async () => {
     exporting = false;
     btnExport.disabled = false;
     btnPlay.disabled = false;
+    btnPlay.textContent = "▶ Preview";
   };
 
   orig.onended = () => {

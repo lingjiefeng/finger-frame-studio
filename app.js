@@ -38,6 +38,8 @@ const PROMPT_SUFFIX =
 
 const WRIST = 0, THUMB_TIP = 4, INDEX_TIP = 8, MIDDLE_MCP = 9;
 const MIDDLE_TIP = 12, RING_TIP = 16, PINKY_TIP = 20;
+// Tip -> PIP joint, for the finger-extension gate (thumb exempt).
+const PIP_OF = { [INDEX_TIP]: 6, [MIDDLE_TIP]: 10, [RING_TIP]: 14, [PINKY_TIP]: 18 };
 
 // Tracking constants — same audited pipeline as the live web app.
 const MAX_LOST_FRAMES = 25;
@@ -544,14 +546,15 @@ const SINGLE_BAND = {
 };
 const MULTI_BANDS = [
   SINGLE_BAND,
-  { name: "Index–middle", lo: INDEX_TIP, hi: MIDDLE_TIP, acquire: 0.28, keep: 0.09, areaAcquire: 0.002, areaKeep: 0.0003 },
-  { name: "Middle–ring", lo: MIDDLE_TIP, hi: RING_TIP, acquire: 0.24, keep: 0.08, areaAcquire: 0.002, areaKeep: 0.0003 },
-  { name: "Ring–pinky", lo: RING_TIP, hi: PINKY_TIP, acquire: 0.26, keep: 0.08, areaAcquire: 0.002, areaKeep: 0.0003 },
+  { name: "Index–middle", lo: INDEX_TIP, hi: MIDDLE_TIP, acquire: 0.28, keep: 0.14, areaAcquire: 0.002, areaKeep: 0.001, hold: 10 },
+  { name: "Middle–ring", lo: MIDDLE_TIP, hi: RING_TIP, acquire: 0.24, keep: 0.14, areaAcquire: 0.002, areaKeep: 0.001, hold: 10 },
+  { name: "Ring–pinky", lo: RING_TIP, hi: PINKY_TIP, acquire: 0.26, keep: 0.14, areaAcquire: 0.002, areaKeep: 0.001, hold: 10 },
 ];
 
 class QuadTracker {
   constructor(band) {
     this.band = band;
+    this.hold = band.hold || MAX_LOST_FRAMES;
     this.reset();
   }
 
@@ -569,12 +572,23 @@ class QuadTracker {
 
   computeQuad(hands) {
     if (hands.length !== 2) return null;
-    const info = hands.map((lm) => ({
-      hi: toPixel(lm[this.band.hi]),
-      lo: toPixel(lm[this.band.lo]),
-      wristX: toPixel(lm[WRIST]).x,
-      scale: dist(toPixel(lm[WRIST]), toPixel(lm[MIDDLE_MCP])) + 1,
-    }));
+    const info = [];
+    for (const lm of hands) {
+      const px = (i) => toPixel(lm[i]);
+      // Both fingers must actually be extended (tip farther from the wrist
+      // than its PIP joint) — curled fingers otherwise yield sliver quads.
+      for (const tip of [this.band.lo, this.band.hi]) {
+        const pip = PIP_OF[tip];
+        if (pip && dist(px(WRIST), px(tip)) <= dist(px(WRIST), px(pip)) * 1.05)
+          return null;
+      }
+      info.push({
+        hi: px(this.band.hi),
+        lo: px(this.band.lo),
+        wristX: px(WRIST).x,
+        scale: dist(px(WRIST), px(MIDDLE_MCP)) + 1,
+      });
+    }
     const needed = this.frameActive ? this.band.keep : this.band.acquire;
     for (const hd of info) {
       if (dist(hd.lo, hd.hi) < hd.scale * needed) return null;
@@ -589,6 +603,9 @@ class QuadTracker {
     );
     const minArea = this.frameActive ? this.band.areaKeep : this.band.areaAcquire;
     if (polygonArea(hull) < canvas.width * canvas.height * minArea) return null;
+    // Crossed hands make self-intersecting quads — chaos when several bands
+    // tile, so reject them in multi mode (single mode keeps its bowtie).
+    if (multiMode && polygonArea(pts) < 0.5 * polygonArea(hull)) return null;
     return pts;
   }
 
@@ -605,7 +622,7 @@ class QuadTracker {
         const moved =
           target.reduce((s, p, i) => s + dist(p, this.corners[i]), 0) / 4;
         if (moved > canvas.width * 0.3 && ++this.jumpFrames < JUMP_CONFIRM_FRAMES) {
-          if (++this.lostFrames > MAX_LOST_FRAMES)
+          if (++this.lostFrames > this.hold)
             this.presence = Math.max(0, this.presence - 0.05);
         } else {
           this.lostFrames = 0;
@@ -616,7 +633,7 @@ class QuadTracker {
           this.presence = Math.min(1, this.presence + 0.12);
         }
       }
-    } else if (this.corners && ++this.lostFrames <= MAX_LOST_FRAMES) {
+    } else if (this.corners && ++this.lostFrames <= this.hold) {
       this.presence = Math.min(1, this.presence + 0.12);
     } else {
       this.presence = Math.max(0, this.presence - 0.05);

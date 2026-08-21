@@ -36,9 +36,10 @@ style ([full-quality mp4](examples/final.mp4)).*
    the result lines up behind the finger-frame window.
 2. **Track** — MediaPipe Hand Landmarker finds both hands per frame, and the
    finger-frame quad is tracked with the same audited pipeline as the live
-   app (anatomical corner ordering — crossing your fingers renders the
-   bowtie — spread/area gates with hysteresis, teleport rejection,
-   velocity-adaptive smoothing, dropout hold, presence fade). A **multi
+   app (anatomical corner ordering, spread/area gates with hysteresis,
+   teleport rejection, velocity-adaptive smoothing, dropout hold, presence
+   fade), plus plausibility gates: fingers must be extended, and twisted
+   (self-intersecting) quads are rejected rather than drawn as bowties. A **multi
    windows** toggle tracks every adjacent-fingertip gap (thumb–index,
    index–middle, middle–ring, ring–pinky) as its own window, so two spread
    hands become a row of frames — closing two fingers closes just that

@@ -534,6 +534,13 @@ function polygonArea(pts) {
   return Math.abs(a / 2);
 }
 
+function segsIntersect(a, b, c, d) {
+  const cross = (o, p, q) => (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
+  const d1 = cross(c, d, a), d2 = cross(c, d, b);
+  const d3 = cross(a, b, c), d4 = cross(a, b, d);
+  return d1 > 0 !== d2 > 0 && d3 > 0 !== d4 > 0;
+}
+
 // A band is a pair of adjacent fingertips; both hands' pairs form the quad
 // [A.hi, B.hi, B.lo, A.lo], each hand contributing one edge — the same
 // construction as the original thumb–index frame. Spread/area gates are
@@ -579,7 +586,7 @@ class QuadTracker {
       // than its PIP joint) — curled fingers otherwise yield sliver quads.
       for (const tip of [this.band.lo, this.band.hi]) {
         const pip = PIP_OF[tip];
-        if (pip && dist(px(WRIST), px(tip)) <= dist(px(WRIST), px(pip)) * 1.05)
+        if (pip && dist(px(WRIST), px(tip)) <= dist(px(WRIST), px(pip)) * 1.15)
           return null;
       }
       info.push({
@@ -603,9 +610,13 @@ class QuadTracker {
     );
     const minArea = this.frameActive ? this.band.areaKeep : this.band.areaAcquire;
     if (polygonArea(hull) < canvas.width * canvas.height * minArea) return null;
-    // Crossed hands make self-intersecting quads — chaos when several bands
-    // tile, so reject them in multi mode (single mode keeps its bowtie).
-    if (multiMode && polygonArea(pts) < 0.5 * polygonArea(hull)) return null;
+    // A twisted quad (opposite edges crossing — hands rotated toward each
+    // other, or crossed fingers) isn't a real frame; reject it outright.
+    if (
+      segsIntersect(pts[0], pts[1], pts[2], pts[3]) ||
+      segsIntersect(pts[1], pts[2], pts[3], pts[0])
+    )
+      return null;
     return pts;
   }
 
@@ -788,11 +799,11 @@ async function togglePreview() {
     btnPlay.textContent = "▶ Resume";
     status("Paused — click again (or the video) to resume.");
   } else if (orig.currentTime > 0 && !orig.ended) {
+    btnPlay.textContent = "⏸ Pause";
+    status("Previewing…");
     activeWindowVideos().forEach((v) => v.play());
     await orig.play();
     requestAnimationFrame(loop);
-    btnPlay.textContent = "⏸ Pause";
-    status("Previewing…");
   } else {
     btnPlay.textContent = "⏸ Pause";
     status("Previewing…");

@@ -2,9 +2,6 @@
 *.mov
 *.mp4
 *.task
-# …except the checked-in example
-!examples/final.mp4
-!examples/final.gif
 
 # Python
 .venv/
@@ -17,3 +14,8 @@ __pycache__/
 *.png
 *.webm
 .env
+
+# …except the checked-in examples (must come last to win)
+!examples/final.mp4
+!examples/*.png
+!examples/*.gif

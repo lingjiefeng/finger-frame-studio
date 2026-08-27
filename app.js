@@ -735,17 +735,20 @@ function drawOutline(q, t, presence) {
   const slim = multiMode ? 0.65 : 1; // lighter chrome when several windows tile
   ctx.save();
   ctx.globalAlpha = presence;
+  // Solid white edge with a bloom: a wide soft pass, then a crisp core.
   quadPath(q);
-  ctx.setLineDash([10 * slim, 8 * slim]);
-  ctx.lineDashOffset = -t * 40;
-  ctx.lineWidth = 2 * slim;
-  ctx.strokeStyle = "rgba(255,255,255,0.95)";
-  ctx.shadowColor = "rgba(0,0,0,0.5)";
-  ctx.shadowBlur = 6;
+  ctx.lineJoin = "round";
+  ctx.shadowColor = "rgba(255,255,255,0.95)";
+  ctx.shadowBlur = 18 * slim;
+  ctx.lineWidth = 2.6 * slim;
+  ctx.strokeStyle = "rgba(255,255,255,0.75)";
   ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.lineDashOffset = 0;
+  ctx.shadowBlur = 10 * slim;
+  ctx.stroke();
   ctx.shadowBlur = 0;
+  ctx.lineWidth = 1.6 * slim;
+  ctx.strokeStyle = "#fff";
+  ctx.stroke();
   q.forEach((p, i) => {
     const r = (7 + Math.sin(t * 3 + i * 1.5) * 1.5) * slim;
     const halo = (t * 0.8 + i * 0.25) % 1;

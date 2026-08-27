@@ -344,6 +344,12 @@
     .canvas-wrap {
       position: relative;
       width: 100%;
+      /* Keep the whole video on screen: cap the frame's width so a tall
+         (portrait) clip can never exceed --stage-h. app.js sets
+         --vid-ratio to the video's width/height; the default is large
+         enough that landscape clips just fill the stage as usual. */
+      --stage-h: 70vh;
+      max-width: calc(var(--stage-h) * var(--vid-ratio, 100));
       background: var(--white);
       border: 1.5px solid var(--pink-line);
       border-radius: 28px;
@@ -366,6 +372,7 @@
     canvas {
       display: block;
       width: 100%;
+      height: auto;
       border-radius: 18px;
       background: #ffeef4;
       cursor: pointer;

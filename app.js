@@ -48,6 +48,7 @@ const JUMP_CONFIRM_FRAMES = 2;
 const orig = document.getElementById("orig");
 const sty = document.getElementById("sty");
 const canvas = document.getElementById("canvas");
+const canvasWrap = canvas.closest(".canvas-wrap");
 const ctx = canvas.getContext("2d");
 const statusEl = document.getElementById("status");
 const stage = document.getElementById("stage");
@@ -272,6 +273,9 @@ async function loadVideo(file) {
   await new Promise((res) => (orig.onloadedmetadata = res));
   canvas.width = orig.videoWidth;
   canvas.height = orig.videoHeight;
+  // Cap the on-screen frame height for tall clips (see --stage-h in the CSS).
+  if (orig.videoWidth && orig.videoHeight)
+    canvasWrap.style.setProperty("--vid-ratio", orig.videoWidth / orig.videoHeight);
   stage.style.display = "flex";
   drop.classList.add("compact");
   mainBig.textContent = `✓ ${file.name}`;

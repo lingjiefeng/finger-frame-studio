@@ -8,7 +8,10 @@ No API key, no model, no account needed for the core flow: you bring the
 video that goes inside. The generation step is deliberately pluggable, so
 any video-to-video model can fill the window instead.
 
-![The window tracking a finger frame, with a video playing inside it](examples/inside-video.gif)
+![Two hands making a finger frame with an anime world playing inside it, the window tracking the hands and then filling the screen](examples/demo.gif)
+
+*Real hands, an anime world inside the frame — made with this app and
+exported straight from the browser.*
 
 <p align="center"><img src="examples/ui.png" width="620" alt="The Finger Frame Studio interface"></p>
 
@@ -114,9 +117,11 @@ by [Sophia Yang](https://github.com/sophiamyang), which contributed the
 original tracking pipeline and the Gemini restyle path. Upstream ships no
 license, so this repo is kept private.
 
-- `examples/final.mp4` is upstream's sample footage, reused here as the demo
-  clip. It is their *rendered output*, so it already has their dashed frame
-  and dots burned in — that faint second outline in the examples above comes
-  from the clip, not from this app.
+- `examples/demo.gif` is a real export from this app, recorded before window
+  outlines became a solid glowing line — so it shows the older dashed frame.
+- `examples/final.mp4` is upstream's sample footage, kept because the `?src=`
+  dev flow and the screenshots use it. It is their *rendered output*, so their
+  dashed frame and corner dots are burned into it — the faint second outline
+  in the placeholder screenshots comes from that clip, not from this app.
 - Your own inputs and outputs are gitignored; only the files under
   `examples/` are committed.

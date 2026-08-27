@@ -38,8 +38,6 @@ const PROMPT_SUFFIX =
 
 const WRIST = 0, THUMB_TIP = 4, INDEX_TIP = 8, MIDDLE_MCP = 9;
 const MIDDLE_TIP = 12, RING_TIP = 16, PINKY_TIP = 20;
-// Tip -> PIP joint, for the finger-extension gate (thumb exempt).
-const PIP_OF = { [INDEX_TIP]: 6, [MIDDLE_TIP]: 10, [RING_TIP]: 14, [PINKY_TIP]: 18 };
 
 // Tracking constants — same audited pipeline as the live web app.
 const MAX_LOST_FRAMES = 25;
@@ -553,13 +551,6 @@ function polygonArea(pts) {
   return Math.abs(a / 2);
 }
 
-function segsIntersect(a, b, c, d) {
-  const cross = (o, p, q) => (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
-  const d1 = cross(c, d, a), d2 = cross(c, d, b);
-  const d3 = cross(a, b, c), d4 = cross(a, b, d);
-  return d1 > 0 !== d2 > 0 && d3 > 0 !== d4 > 0;
-}
-
 // A band is a pair of adjacent fingertips; both hands' pairs form the quad
 // [A.hi, B.hi, B.lo, A.lo], each hand contributing one edge — the same
 // construction as the original thumb–index frame. Spread/area gates are
@@ -572,15 +563,14 @@ const SINGLE_BAND = {
 };
 const MULTI_BANDS = [
   SINGLE_BAND,
-  { name: "Index–middle", lo: INDEX_TIP, hi: MIDDLE_TIP, acquire: 0.28, keep: 0.14, areaAcquire: 0.002, areaKeep: 0.001, hold: 10 },
-  { name: "Middle–ring", lo: MIDDLE_TIP, hi: RING_TIP, acquire: 0.24, keep: 0.14, areaAcquire: 0.002, areaKeep: 0.001, hold: 10 },
-  { name: "Ring–pinky", lo: RING_TIP, hi: PINKY_TIP, acquire: 0.26, keep: 0.14, areaAcquire: 0.002, areaKeep: 0.001, hold: 10 },
+  { name: "Index–middle", lo: INDEX_TIP, hi: MIDDLE_TIP, acquire: 0.28, keep: 0.09, areaAcquire: 0.002, areaKeep: 0.0003 },
+  { name: "Middle–ring", lo: MIDDLE_TIP, hi: RING_TIP, acquire: 0.24, keep: 0.08, areaAcquire: 0.002, areaKeep: 0.0003 },
+  { name: "Ring–pinky", lo: RING_TIP, hi: PINKY_TIP, acquire: 0.26, keep: 0.08, areaAcquire: 0.002, areaKeep: 0.0003 },
 ];
 
 class QuadTracker {
   constructor(band) {
     this.band = band;
-    this.hold = band.hold || MAX_LOST_FRAMES;
     this.reset();
   }
 
@@ -598,23 +588,12 @@ class QuadTracker {
 
   computeQuad(hands) {
     if (hands.length !== 2) return null;
-    const info = [];
-    for (const lm of hands) {
-      const px = (i) => toPixel(lm[i]);
-      // Both fingers must actually be extended (tip farther from the wrist
-      // than its PIP joint) — curled fingers otherwise yield sliver quads.
-      for (const tip of [this.band.lo, this.band.hi]) {
-        const pip = PIP_OF[tip];
-        if (pip && dist(px(WRIST), px(tip)) <= dist(px(WRIST), px(pip)) * 1.15)
-          return null;
-      }
-      info.push({
-        hi: px(this.band.hi),
-        lo: px(this.band.lo),
-        wristX: px(WRIST).x,
-        scale: dist(px(WRIST), px(MIDDLE_MCP)) + 1,
-      });
-    }
+    const info = hands.map((lm) => ({
+      hi: toPixel(lm[this.band.hi]),
+      lo: toPixel(lm[this.band.lo]),
+      wristX: toPixel(lm[WRIST]).x,
+      scale: dist(toPixel(lm[WRIST]), toPixel(lm[MIDDLE_MCP])) + 1,
+    }));
     const needed = this.frameActive ? this.band.keep : this.band.acquire;
     for (const hd of info) {
       if (dist(hd.lo, hd.hi) < hd.scale * needed) return null;
@@ -629,13 +608,6 @@ class QuadTracker {
     );
     const minArea = this.frameActive ? this.band.areaKeep : this.band.areaAcquire;
     if (polygonArea(hull) < canvas.width * canvas.height * minArea) return null;
-    // A twisted quad (opposite edges crossing — hands rotated toward each
-    // other, or crossed fingers) isn't a real frame; reject it outright.
-    if (
-      segsIntersect(pts[0], pts[1], pts[2], pts[3]) ||
-      segsIntersect(pts[1], pts[2], pts[3], pts[0])
-    )
-      return null;
     return pts;
   }
 
@@ -652,7 +624,7 @@ class QuadTracker {
         const moved =
           target.reduce((s, p, i) => s + dist(p, this.corners[i]), 0) / 4;
         if (moved > canvas.width * 0.3 && ++this.jumpFrames < JUMP_CONFIRM_FRAMES) {
-          if (++this.lostFrames > this.hold)
+          if (++this.lostFrames > MAX_LOST_FRAMES)
             this.presence = Math.max(0, this.presence - 0.05);
         } else {
           this.lostFrames = 0;
@@ -663,7 +635,7 @@ class QuadTracker {
           this.presence = Math.min(1, this.presence + 0.12);
         }
       }
-    } else if (this.corners && ++this.lostFrames <= this.hold) {
+    } else if (this.corners && ++this.lostFrames <= MAX_LOST_FRAMES) {
       this.presence = Math.min(1, this.presence + 0.12);
     } else {
       this.presence = Math.max(0, this.presence - 0.05);

@@ -120,8 +120,6 @@ license, so this repo is kept private.
 - `examples/demo.gif` is a real export from this app, recorded before window
   outlines became a solid glowing line — so it shows the older dashed frame.
 - `examples/final.mp4` is upstream's sample footage, kept because the `?src=`
-  dev flow and the screenshots use it. It is their *rendered output*, so their
-  dashed frame and corner dots are burned into it — the faint second outline
-  in the placeholder screenshots comes from that clip, not from this app.
+  dev flow uses it as a quick test clip.
 - Your own inputs and outputs are gitignored; only the files under
   `examples/` are committed.

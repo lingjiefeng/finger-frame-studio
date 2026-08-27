@@ -411,14 +411,37 @@
       background: var(--grad);
       box-shadow: 0 14px 30px -10px rgba(255, 95, 151, 0.85);
     }
+    /* placeholder-style picker */
+    .seg {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 10px 6px 13px;
+      border-radius: var(--r-pill);
+      border: 1.5px dashed var(--pink-line);
+      background: rgba(255, 255, 255, 0.62);
+    }
+    .seg .seg-label {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--ink-faint);
+    }
+    .seg button { padding: 8px 13px; font-size: 12.5px; box-shadow: none; }
+    .seg button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .seg button[aria-pressed="true"] {
+      background: var(--grad);
+      border-color: transparent;
+      color: var(--white);
+      box-shadow: var(--shadow-sm);
+    }
+    .seg button[aria-pressed="true"]:hover:not(:disabled) { background: var(--grad); }
+
     /* multi-windows toggle "on" state (app.js sets aria-pressed) */
-    button[aria-pressed="true"] {
+    #btn-multi[aria-pressed="true"] {
       background: linear-gradient(135deg, #8fe4d2, var(--mint));
       border-color: transparent;
       color: #06463a;
       box-shadow: 0 10px 24px -12px rgba(80, 200, 175, 0.85);
     }
-    button[aria-pressed="true"]:hover:not(:disabled) {
+    #btn-multi[aria-pressed="true"]:hover:not(:disabled) {
       background: linear-gradient(135deg, #8fe4d2, var(--mint));
     }
 
@@ -559,7 +582,12 @@
     <div class="canvas-wrap"><canvas id="canvas"></canvas></div>
     <div id="controls">
       <button id="btn-generate" class="primary">✨ Generate AI video</button>
-      <button id="btn-placeholder">Try placeholder style</button>
+      <div class="seg" id="placeholder-group">
+        <span class="seg-label">no key?</span>
+        <button id="btn-placeholder" title="Black &amp; white — no API key needed">🖤 B&amp;W</button>
+        <button id="btn-mosaic" title="Chunky pixel mosaic — no API key needed">🧩 Mosaic</button>
+        <button id="btn-blush" title="Pink duotone — no API key needed">🌸 Blush</button>
+      </div>
       <button id="btn-multi" title="Turn every gap between spread fingers into its own window">🖐 Multi windows: off</button>
       <button id="btn-play" disabled>▶ Preview</button>
       <button id="btn-export" disabled>⬇ Export</button>
